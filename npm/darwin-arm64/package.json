@@ -1,0 +1,19 @@
+{
+  "name": "@lygo/wego-rs-darwin-arm64",
+  "version": "0.0.0",
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "main": "wego-rs.darwin-arm64.node",
+  "files": [
+    "wego-rs.darwin-arm64.node"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  },
+  "repository": "https://github.com/LYfirstday/wego-rs"
+}
