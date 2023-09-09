@@ -11,6 +11,7 @@ export const enum TemplateType {
   Components = 1,
   Project = 2
 }
+export function sum(a: number, b: number): number
 /**
  * 初始化本地yaml配置文件
 */
