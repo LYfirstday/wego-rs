@@ -47,6 +47,11 @@ lazy_static! {
   };
 }
 
+#[napi]
+pub fn sum(a: i32, b: i32) -> i32 {
+  a + b
+}
+
 /**
  * 初始化本地yaml配置文件
  */
