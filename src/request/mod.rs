@@ -18,7 +18,7 @@ pub mod request;
 pub struct ConfigYaml {
   pub name: String,
   pub description: String,
-  pub dependencies: Vec<String>,
+  pub dependencies: Option<Vec<String>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -136,11 +136,15 @@ pub fn find_all_deps(deps: Vec<String>, list: Vec<ConfigYaml>) -> Vec<String> {
   let mut this_deps = deps.clone();
   for item in &list {
     if this_deps.contains(&item.name) {
-      if &item.dependencies.len() > &0 {
-        for dep in &item.dependencies {
-          if !this_deps.contains(dep) {
-            this_deps.push(dep.to_string());
-            this_deps = find_all_deps(this_deps, list.clone());
+      if let Some(deps) = &item.dependencies {
+        if &deps.len() > &0 {
+          if let Some(dep) = &item.dependencies {
+            for dep_item in dep {
+              if !this_deps.contains(dep_item) {
+                this_deps.push(dep_item.to_string());
+                this_deps = find_all_deps(this_deps, list.clone());
+              }
+            }
           }
         }
       }
@@ -290,12 +294,15 @@ impl RemoteYaml {
         let start_time = Instant::now();
         let _ = &run_job(info, local_path, token.to_string(), request_url.clone()).await;
         println!("Done in {:?} ms!", start_time.elapsed().as_millis());
-        if &deps.len() > &0 {
-          println!("{} {:?}", "Start loading dependencies ---->".green(), &deps);
-          let all = find_all_deps(deps.clone(), self.components.clone());
-          self
-            .download_components_to_local(all, token.clone(), &run_job, config_file)
-            .await;
+
+        if let Some(dep) = deps {
+          if &dep.len() > &0 {
+            println!("{} {:?}", "Start loading dependencies ---->".green(), &dep);
+            let all = find_all_deps(dep.clone(), self.components.clone());
+            self
+              .download_components_to_local(all, token.clone(), &run_job, config_file)
+              .await;
+          }
         }
       } else {
         println!(
@@ -329,14 +336,16 @@ impl RemoteYaml {
     if let Some(index) = selection {
       let this_comp = &components[index];
       let file_name = &this_comp.name;
-      let mut deps = this_comp.dependencies.clone();
-      deps.push(String::from(file_name));
 
-      let all = find_all_deps(deps, components.to_vec());
-      let token: String = String::from(&config_file.github_api_token);
-      self
-        .download_components_to_local(all, token, &run_job, config_file)
-        .await;
+      if let Some(ref mut deps) = this_comp.dependencies.clone() {
+        deps.push(String::from(file_name));
+
+        let all = find_all_deps(deps.to_vec(), components.to_vec());
+        let token: String = String::from(&config_file.github_api_token);
+        self
+          .download_components_to_local(all, token, &run_job, config_file)
+          .await;
+      }
     }
     Ok(())
   }
