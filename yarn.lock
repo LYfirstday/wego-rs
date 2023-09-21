@@ -19,6 +19,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@lygo/wego-rs@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "@lygo/wego-rs@workspace:."
+  dependencies:
+    "@napi-rs/cli": ^2.16.3
+    ava: ^5.1.1
+  languageName: unknown
+  linkType: soft
+
 "@napi-rs/cli@npm:^2.16.3":
   version: 2.16.3
   resolution: "@napi-rs/cli@npm:2.16.3"
@@ -1962,15 +1971,6 @@ __metadata:
   checksum: 474acf1146cb2701fe3b074892217553dfcf9a031280919ba1b8d651a068c9b15d863b7303cb15bd00a862b498e6cf4ad7b4a08fb134edd5a6f7641681cb54a2
   languageName: node
   linkType: hard
-
-"wego-rs@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "wego-rs@workspace:."
-  dependencies:
-    "@napi-rs/cli": ^2.16.3
-    ava: ^5.1.1
-  languageName: unknown
-  linkType: soft
 
 "well-known-symbols@npm:^2.0.0":
   version: 2.0.0

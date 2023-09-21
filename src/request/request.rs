@@ -8,6 +8,7 @@ use dialoguer::{console::Term, theme::ColorfulTheme, Input, Select};
 use hyper::header::{AUTHORIZATION, USER_AGENT};
 use hyper::{Body, Request};
 
+use crate::request::find_all_deps;
 use crate::CLIENT;
 use crate::{
   constants,
@@ -15,7 +16,7 @@ use crate::{
   TemplateType, CONFIG_FILE,
 };
 
-use super::{ConfigYaml, RemoteGithubDir};
+use super::RemoteGithubDir;
 
 pub async fn get_remote_yaml_config(t_type: TemplateType) {
   let uri;
@@ -92,12 +93,15 @@ pub async fn show_templates_by_type(content: ContentsResponse, t_type: TemplateT
       let index = show_selection(&vec_pages);
       if index != 99999 {
         select_string_items(info.pages[index].name.clone(), t_type).await;
-        let deps = &info.pages[index].dependencies;
-        if deps.len() > 0 {
-          let all = find_all_deps(deps.clone(), info.components.clone());
-          println!("{} {:?}", "Start loading dependencies ---->".green(), &deps);
+        // let deps = &info.pages[index].dependencies;
 
-          download_components_to_local(all, token, &target_branch).await;
+        if let Some(deps) = &info.pages[index].dependencies {
+          if deps.len() > 0 {
+            let all = find_all_deps(deps.clone(), info.components.clone());
+            println!("{} {:?}", "Start loading dependencies ---->".green(), &deps);
+
+            download_components_to_local(all, token, &target_branch).await;
+          }
         }
       }
     }
@@ -106,12 +110,14 @@ pub async fn show_templates_by_type(content: ContentsResponse, t_type: TemplateT
       let index = show_selection(&vec_coms);
       if index != 99999 {
         select_string_items(info.components[index].name.clone(), t_type).await;
-        let deps: &Vec<String> = &info.components[index].dependencies;
-        if deps.len() > 0 {
-          let all = find_all_deps(deps.clone(), info.components.clone());
-          println!("{} {:?}", "Start loading dependencies ---->".green(), &deps);
 
-          download_components_to_local(all, token, &target_branch).await;
+        if let Some(deps) = &info.components[index].dependencies {
+          if deps.len() > 0 {
+            let all = find_all_deps(deps.clone(), info.components.clone());
+            println!("{} {:?}", "Start loading dependencies ---->".green(), &deps);
+
+            download_components_to_local(all, token, &target_branch).await;
+          }
         }
       }
     }
@@ -178,24 +184,6 @@ pub async fn select_string_items(this_page_name: String, t_type: TemplateType) {
 
     println!("Done in {:?} ms!", start_time.elapsed().as_millis());
   }
-}
-
-pub fn find_all_deps(deps: Vec<String>, list: Vec<ConfigYaml>) -> Vec<String> {
-  let mut this_deps = deps.clone();
-  for item in &list {
-    if this_deps.contains(&item.name) {
-      if &item.dependencies.len() > &0 {
-        for dep in &item.dependencies {
-          if !this_deps.contains(dep) {
-            this_deps.push(dep.to_string());
-            this_deps = find_all_deps(this_deps, list.clone());
-          }
-        }
-      }
-    }
-  }
-
-  this_deps
 }
 
 pub fn get_local_dir(name: String, temp_type: TemplateType) -> String {
@@ -334,20 +322,17 @@ async fn run_job(
   info: RemoteGithubDir,
   local_path: String,
   token: String,
-  request_path: String,
+  _request_path: String,
   target_branch: &String,
 ) {
   let mut async_tasks = vec![];
-
   for data in info {
     let this_dir_path = vec![local_path.clone(), data.name.clone()].join(FILE_MARKER);
     if data.file_type == "dir" {
-      let rq_url = vec![request_path.clone(), data.name.clone()];
-
       let handle = create_local_dir(
         this_dir_path.clone(),
         token.to_string(),
-        rq_url.join("/"),
+        data.url,
         target_branch.clone(),
       );
 
@@ -377,9 +362,8 @@ async fn create_local_dir(
     println!("Create dir failure: {:#?}", e);
   }
   println!("{}, {}", &local_path.green(), "Create done!");
-
   let req_result = Request::builder()
-    .uri(request_path.clone())
+    .uri(&request_path)
     .method("GET")
     .header(AUTHORIZATION, format!("Bearer {}", token))
     .header(USER_AGENT, "wego")
@@ -438,7 +422,7 @@ async fn create_local_file(
   preview_url: String,
 ) {
   let req_result = Request::builder()
-    .uri(request_path.clone())
+    .uri(&request_path)
     .method("GET")
     .header(AUTHORIZATION, format!("Bearer {}", token))
     .header(USER_AGENT, "wego")

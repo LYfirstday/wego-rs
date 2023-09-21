@@ -138,6 +138,7 @@ pub fn read_config_file_from_local() -> Result<(), ()> {
     config.github_api_token = token_string;
     config.target_branch = t_branch;
     config.templates_source = t_source;
+
     Ok(())
   } else {
     println!(
